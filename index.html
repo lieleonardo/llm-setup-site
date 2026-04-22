@@ -645,7 +645,6 @@ footer span { color: var(--accent); }
   <a href="#" class="nav-logo">LOCAL//LLM</a>
   <ul class="nav-links">
     <li><a href="#guides">Panduan</a></li>
-    <li><a href="#deploy">Deploy</a></li>
     <li><a href="https://github.com" target="_blank">GitHub →</a></li>
   </ul>
 </nav>
@@ -673,7 +672,6 @@ footer span { color: var(--accent); }
     <div class="fade-in">
       <div class="hero-cta">
         <a href="#guides" class="btn-primary">↓ LIHAT PANDUAN</a>
-        <a href="#deploy" class="btn-outline">CARA DEPLOY →</a>
       </div>
     </div>
 
@@ -703,41 +701,23 @@ footer span { color: var(--accent); }
   <section class="section" id="guides">
     <div class="section-header reveal">
       <span class="section-tag">// 02. PILIH PANDUAN</span>
-      <h2 class="section-title">Dua Jalur Setup.<br>Pilih Sesuai GPU Kamu.</h2>
+      <h2 class="section-title">Satu Panduan Universal.<br>Semua GPU Didukung.</h2>
     </div>
 
     <div class="guide-grid reveal">
 
-      <!-- Card 1: Intel Arc B580 -->
-      <a href="guides/arc-b580.html" class="guide-card intel">
-        <div class="card-top">
-          <div class="card-icon">🔵</div>
-          <div class="card-title">Intel Arc B580</div>
-          <p class="card-desc">Panduan spesifik untuk Intel Arc B580 12GB. Menggunakan IPEX-LLM — fork Ollama resmi dari Intel untuk akselerasi GPU Arc.</p>
-        </div>
-        <div class="card-chips">
-          <span class="chip chip-blue">Intel Arc</span>
-          <span class="chip chip-blue">B580 12GB</span>
-          <span class="chip chip-green">IPEX-LLM</span>
-          <span class="chip chip-gray">16GB DDR5</span>
-        </div>
-        <div class="card-footer">
-          <span class="card-link-text">BUKA PANDUAN</span>
-          <span class="card-arrow">→</span>
-        </div>
-      </a>
-
-      <!-- Card 2: Universal -->
+      <!-- Card: Universal (includes Intel Arc B580) -->
       <a href="guides/universal.html" class="guide-card universal">
         <div class="card-top">
           <div class="card-icon">⚡</div>
           <div class="card-title">Universal GPU</div>
-          <p class="card-desc">Panduan lengkap untuk semua vendor GPU. Pilih GPU dan VRAM kamu, panduan otomatis menyesuaikan langkah instalasi.</p>
+          <p class="card-desc">Panduan lengkap untuk semua vendor GPU termasuk Intel Arc B580. Pilih GPU dan VRAM kamu, panduan otomatis menyesuaikan langkah instalasi.</p>
         </div>
         <div class="card-chips">
           <span class="chip chip-green">NVIDIA CUDA</span>
           <span class="chip chip-red">AMD Vulkan</span>
           <span class="chip chip-blue">Intel IPEX</span>
+          <span class="chip chip-blue">Arc B580</span>
           <span class="chip chip-cyan">4–16GB VRAM</span>
         </div>
         <div class="card-footer">
@@ -745,121 +725,6 @@ footer span { color: var(--accent); }
           <span class="card-arrow">→</span>
         </div>
       </a>
-
-    </div>
-  </section>
-</div>
-
-<!-- DEPLOY TO GITHUB PAGES -->
-<div class="wrap">
-  <section class="deploy-section" id="deploy">
-    <div class="section-header reveal">
-      <span class="section-tag">// 03. CARA DEPLOY</span>
-      <h2 class="section-title">Host di<br>GitHub Pages.</h2>
-    </div>
-
-    <div class="deploy-grid">
-
-      <!-- Steps -->
-      <div class="step-list reveal">
-
-        <div class="deploy-step">
-          <div class="step-dot">1</div>
-          <div class="step-content">
-            <div class="step-heading">Buat Repository Baru</div>
-            <p class="step-text">
-              Buka <a href="https://github.com/new" target="_blank">github.com/new</a>.
-              Beri nama repo, contoh: <code>local-llm-setup</code>.
-              Set ke <strong>Public</strong>, lalu klik <strong>Create repository</strong>.
-            </p>
-          </div>
-        </div>
-
-        <div class="deploy-step">
-          <div class="step-dot">2</div>
-          <div class="step-content">
-            <div class="step-heading">Siapkan Struktur Folder</div>
-            <p class="step-text">Download semua file panduan ini, susun dengan struktur berikut sebelum upload:</p>
-            <div class="folder-tree">
-              <span class="tree-dir">📁 local-llm-setup/</span><br>
-              <span class="tree-file">│── index.html</span> <span class="tree-note">← halaman ini</span><br>
-              <span class="tree-dir">└── 📁 guides/</span><br>
-              <span class="tree-file">&nbsp;&nbsp;&nbsp;&nbsp;├── arc-b580.html</span><br>
-              <span class="tree-file">&nbsp;&nbsp;&nbsp;&nbsp;└── universal.html</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="deploy-step">
-          <div class="step-dot">3</div>
-          <div class="step-content">
-            <div class="step-heading">Upload via Git (Disarankan)</div>
-            <p class="step-text">
-              Clone repo, masukkan file, push. Atau upload langsung via <strong>Add file → Upload files</strong> di halaman repo GitHub.
-            </p>
-          </div>
-        </div>
-
-        <div class="deploy-step">
-          <div class="step-dot">4</div>
-          <div class="step-content">
-            <div class="step-heading">Aktifkan GitHub Pages</div>
-            <p class="step-text">
-              Di repo → <strong>Settings</strong> → <strong>Pages</strong> → Source: <code>Deploy from a branch</code> → Branch: <code>main</code>, folder: <code>/ (root)</code> → klik <strong>Save</strong>.
-            </p>
-          </div>
-        </div>
-
-        <div class="deploy-step">
-          <div class="step-dot">5</div>
-          <div class="step-content">
-            <div class="step-heading">Tunggu 1–2 Menit</div>
-            <p class="step-text">
-              Setelah aktif, situsmu live di:<br>
-              <code>https://username.github.io/local-llm-setup</code>
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Code Panel -->
-      <div class="reveal">
-        <div class="code-panel">
-          <div class="code-panel-header">
-            <div class="dot dot-r"></div>
-            <div class="dot dot-y"></div>
-            <div class="dot dot-g"></div>
-            <span class="code-panel-title">terminal — git deploy</span>
-          </div>
-          <pre><span class="c-cmt"># 1. Clone repo yang baru dibuat</span>
-<span class="c-cmd">git clone</span> <span class="c-url">https://github.com/USERNAME/local-llm-setup.git</span>
-<span class="c-cmd">cd</span> local-llm-setup
-
-<span class="c-cmt"># 2. Buat folder guides</span>
-<span class="c-cmd">mkdir</span> guides
-
-<span class="c-cmt"># 3. Pindahkan file HTML ke posisi yang benar</span>
-<span class="c-cmt">#    index.html → root folder</span>
-<span class="c-cmt">#    arc-b580.html → guides/</span>
-<span class="c-cmt">#    universal.html → guides/</span>
-
-<span class="c-cmt"># 4. Add, commit, push</span>
-<span class="c-cmd">git add</span> .
-<span class="c-cmd">git commit</span> -m <span class="c-str">"feat: add local LLM setup guides"</span>
-<span class="c-cmd">git push</span> origin main
-
-<span class="c-cmt"># 5. Aktifkan Pages di GitHub Settings</span>
-<span class="c-cmt">#    Settings → Pages → Branch: main → Save</span>
-
-<span class="c-ok"># ✓ Live di:</span>
-<span class="c-acc">https://USERNAME.github.io/local-llm-setup</span></pre>
-        </div>
-
-        <div style="margin-top:16px; padding:14px 18px; background:rgba(0,255,136,0.05); border:1px solid rgba(0,255,136,0.12); border-radius:6px; font-size:12px; color:#6bcf9e; line-height:1.7;">
-          💡 <strong style="color:#86efac">Tips:</strong> Setiap kali update file, cukup <code style="background:rgba(0,0,0,0.3); color:#7dd5a9; padding:1px 5px; border-radius:3px;">git push</code> lagi — GitHub Pages otomatis rebuild dalam 1–2 menit.
-        </div>
-      </div>
 
     </div>
   </section>
