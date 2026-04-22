@@ -991,25 +991,22 @@ claude --model qwen2.5-coder:14b</pre>
 
           <div class="alert a-info"><span class="alert-icon">💡</span><span>Open WebUI memberikan tampilan chat seperti ChatGPT, berjalan 100% lokal di browser kamu. Support semua GPU — NVIDIA, AMD, dan Intel Arc.</span></div>
 
-          <p style="font-size:13px; color:var(--muted); margin-bottom:12px;"><strong style="color:var(--text)">Requirement</strong> — pastikan sudah terinstall:</p>
+          <!-- BAGIAN A: INSTALL -->
+          <p style="font-size:13px; color:var(--muted); margin-bottom:12px;"><strong style="color:var(--text)">A. Requirement</strong> — pastikan sudah terinstall:</p>
           <ul class="checklist">
             <li><div class="cb" onclick="toggleCb(this)"></div><span>Python <code>≥ 3.11</code> — cek dengan <code>python --version</code></span></li>
             <li><div class="cb" onclick="toggleCb(this)"></div><span>Ollama sudah berjalan (selesaikan Step 1–4 terlebih dahulu)</span></li>
           </ul>
 
-          <p style="font-size:13px; color:var(--muted); margin: 16px 0 12px;"><strong style="color:var(--text)">Install Open WebUI via pip</strong></p>
+          <p style="font-size:13px; color:var(--muted); margin: 16px 0 12px;"><strong style="color:var(--text)">B. Install Open WebUI via pip</strong></p>
           <div class="code-wrap">
             <div class="code-top"><span class="code-lang">CMD / PowerShell</span><button class="copy-btn" onclick="cp(this,'owui-inst')">COPY</button></div>
             <pre id="owui-inst"><span class="cm"># Install Open WebUI</span>
-pip install open-webui
-
-<span class="cm"># Jalankan server (pastikan Ollama sudah running duluan)</span>
-open-webui serve</pre>
+pip install open-webui</pre>
           </div>
 
-          <div class="alert a-ok"><span class="alert-icon">✅</span><span>Setelah server jalan, buka browser ke <strong>http://localhost:8080</strong> — buat akun admin, lalu pilih model dari Ollama.</span></div>
-
-          <p style="font-size:13px; color:var(--muted); margin: 16px 0 12px;"><strong style="color:var(--text)">Urutan menjalankan setiap kali pakai</strong></p>
+          <!-- BAGIAN C: JALANKAN -->
+          <p style="font-size:13px; color:var(--muted); margin: 16px 0 12px;"><strong style="color:var(--text)">C. Urutan menjalankan setiap kali pakai</strong></p>
           <div class="code-wrap">
             <div class="code-top"><span class="code-lang">CMD / PowerShell — terminal 1</span><button class="copy-btn" onclick="cp(this,'owui-run1')">COPY</button></div>
             <pre id="owui-run1"><span class="cm"># Jalankan Ollama terlebih dahulu</span>
@@ -1025,6 +1022,47 @@ open-webui serve
           </div>
 
           <div class="alert a-warn"><span class="alert-icon">⚠️</span><span>Untuk <strong>Intel Arc</strong>: pastikan Ollama IPEX-LLM sudah running sebelum membuka Open WebUI. Open WebUI hanya sebagai frontend — inferensi tetap dilakukan oleh Ollama + IPEX-LLM di GPU kamu.</span></div>
+
+          <!-- BAGIAN D: SETUP PERTAMA KALI -->
+          <p style="font-size:13px; color:var(--muted); margin: 20px 0 12px;"><strong style="color:var(--text)">D. Setup pertama kali di browser</strong></p>
+
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:16px;">
+
+            <div style="display:flex; gap:14px; align-items:flex-start; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px;">
+              <div style="min-width:24px; height:24px; background:rgba(79,142,247,0.15); border:1px solid rgba(79,142,247,0.3); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#93c5fd;">1</div>
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:3px;">Buat akun admin</div>
+                <div style="font-size:12px; color:var(--muted); line-height:1.6;">Halaman pertama langsung minta Sign Up — isi nama, email, dan password bebas. Akun pertama otomatis jadi <strong style="color:var(--text)">Administrator</strong>. Semua data disimpan lokal, tidak dikirim ke mana pun.</div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:14px; align-items:flex-start; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px;">
+              <div style="min-width:24px; height:24px; background:rgba(79,142,247,0.15); border:1px solid rgba(79,142,247,0.3); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#93c5fd;">2</div>
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:3px;">Verifikasi koneksi Ollama</div>
+                <div style="font-size:12px; color:var(--muted); line-height:1.6;">Masuk ke <code>Admin Settings → Connections</code> — pastikan Ollama URL terisi <code>http://localhost:11434</code> dan statusnya <strong style="color:#86efac">Service Connection Verified</strong>. Biasanya sudah auto-detect.</div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:14px; align-items:flex-start; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px;">
+              <div style="min-width:24px; height:24px; background:rgba(79,142,247,0.15); border:1px solid rgba(79,142,247,0.3); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#93c5fd;">3</div>
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:3px;">Download model</div>
+                <div style="font-size:12px; color:var(--muted); line-height:1.6;">Masuk ke <code>Admin Settings → Models</code> — ketik nama model di kolom <em>Pull a model</em> lalu klik Download. Model yang sudah di-pull lewat Ollama CLI sebelumnya otomatis muncul di sini.</div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:14px; align-items:flex-start; padding:12px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:8px;">
+              <div style="min-width:24px; height:24px; background:rgba(79,142,247,0.15); border:1px solid rgba(79,142,247,0.3); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:#93c5fd;">4</div>
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:3px;">Mulai chat</div>
+                <div style="font-size:12px; color:var(--muted); line-height:1.6;">Klik <strong style="color:var(--text)">New Chat</strong> di sidebar kiri, pilih model dari dropdown atas, dan mulai ngobrol. Bisa juga drag &amp; drop dokumen/gambar ke chat box.</div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="alert a-ok"><span class="alert-icon">✅</span><span>Setup selesai — Open WebUI siap dipakai. Untuk sesi berikutnya cukup jalankan <code>ollama serve</code> + <code>open-webui serve</code> lalu buka <strong>http://localhost:8080</strong>.</span></div>
 
           <button class="mark-done-btn" onclick="markDone('s7')">✓ Langkah ini selesai</button>
         </div>
