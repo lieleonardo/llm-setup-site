@@ -976,7 +976,62 @@ claude --model qwen2.5-coder:14b</pre>
       </div>
     </div>
 
-    <!-- Finish Banner -->
+    <!-- STEP 7: Open WebUI (Opsional) -->
+    <div class="step-block" id="s7">
+      <button class="step-header-btn" onclick="toggleStep('s7')">
+        <div class="step-num"><span>7</span></div>
+        <div class="step-title-wrap">
+          <span class="step-title-text">Open WebUI <span style="font-size:11px; background:rgba(79,142,247,0.15); color:#93c5fd; border:1px solid rgba(79,142,247,0.25); padding:2px 8px; border-radius:100px; font-weight:600; letter-spacing:0.05em; margin-left:6px;">OPSIONAL</span></span>
+          <span class="step-subtitle">Chat GUI lokal — semua GPU, connect ke Ollama</span>
+        </div>
+        <span class="step-chevron">▶</span>
+      </button>
+      <div class="step-body">
+        <div data-gpu="all">
+
+          <div class="alert a-info"><span class="alert-icon">💡</span><span>Open WebUI memberikan tampilan chat seperti ChatGPT, berjalan 100% lokal di browser kamu. Support semua GPU — NVIDIA, AMD, dan Intel Arc.</span></div>
+
+          <p style="font-size:13px; color:var(--muted); margin-bottom:12px;"><strong style="color:var(--text)">Requirement</strong> — pastikan sudah terinstall:</p>
+          <ul class="checklist">
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Python <code>≥ 3.11</code> — cek dengan <code>python --version</code></span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Ollama sudah berjalan (selesaikan Step 1–4 terlebih dahulu)</span></li>
+          </ul>
+
+          <p style="font-size:13px; color:var(--muted); margin: 16px 0 12px;"><strong style="color:var(--text)">Install Open WebUI via pip</strong></p>
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD / PowerShell</span><button class="copy-btn" onclick="cp(this,'owui-inst')">COPY</button></div>
+            <pre id="owui-inst"><span class="cm"># Install Open WebUI</span>
+pip install open-webui
+
+<span class="cm"># Jalankan server (pastikan Ollama sudah running duluan)</span>
+open-webui serve</pre>
+          </div>
+
+          <div class="alert a-ok"><span class="alert-icon">✅</span><span>Setelah server jalan, buka browser ke <strong>http://localhost:8080</strong> — buat akun admin, lalu pilih model dari Ollama.</span></div>
+
+          <p style="font-size:13px; color:var(--muted); margin: 16px 0 12px;"><strong style="color:var(--text)">Urutan menjalankan setiap kali pakai</strong></p>
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD / PowerShell — terminal 1</span><button class="copy-btn" onclick="cp(this,'owui-run1')">COPY</button></div>
+            <pre id="owui-run1"><span class="cm"># Jalankan Ollama terlebih dahulu</span>
+ollama serve</pre>
+          </div>
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD / PowerShell — terminal 2</span><button class="copy-btn" onclick="cp(this,'owui-run2')">COPY</button></div>
+            <pre id="owui-run2"><span class="cm"># Jalankan Open WebUI di terminal terpisah</span>
+open-webui serve
+
+<span class="cm"># Buka browser:</span>
+<span class="ok">http://localhost:8080</span></pre>
+          </div>
+
+          <div class="alert a-warn"><span class="alert-icon">⚠️</span><span>Untuk <strong>Intel Arc</strong>: pastikan Ollama IPEX-LLM sudah running sebelum membuka Open WebUI. Open WebUI hanya sebagai frontend — inferensi tetap dilakukan oleh Ollama + IPEX-LLM di GPU kamu.</span></div>
+
+          <button class="mark-done-btn" onclick="markDone('s7')">✓ Langkah ini selesai</button>
+        </div>
+      </div>
+    </div>
+
+        <!-- Finish Banner -->
     <div class="finish-banner" id="finishBanner">
       <h2>🎉 Setup Selesai!</h2>
       <p style="margin-top:8px;">Local LLM + Claude Code sudah terhubung.<br>Jalankan <code>claude</code> di terminal project kamu.</p>
@@ -1002,7 +1057,7 @@ claude --model qwen2.5-coder:14b</pre>
     document.getElementById('banner-' + gpu).classList.add('show');
 
     // Reset semua step: hapus done, open, dan semua checkbox
-    const ids = ['s1','s2','s3','s4','s5','s6'];
+    const ids = ['s1','s2','s3','s4','s5','s6','s7'];
     ids.forEach(id => {
       const block = document.getElementById(id);
       block.classList.remove('done', 'open');
@@ -1056,14 +1111,14 @@ claude --model qwen2.5-coder:14b</pre>
     doneSteps.add(id);
 
     // Open next step
-    const ids = ['s1','s2','s3','s4','s5','s6'];
+    const ids = ['s1','s2','s3','s4','s5','s6','s7'];
     const idx = ids.indexOf(id);
     if (idx >= 0 && idx < ids.length - 1) {
       document.getElementById(ids[idx+1]).classList.add('open');
     }
 
     // Show finish when all done
-    if (doneSteps.size >= ids.length) {
+    if (doneSteps.size >= ids.filter(id => document.getElementById(id)).length) {
       document.getElementById('finishBanner').classList.add('show');
     }
   }
