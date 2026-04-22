@@ -911,7 +911,8 @@ C:\ipex-llm\ollama.exe run qwen2.5-coder:14b --verbose
         </div>
         <span class="step-chevron">▶</span>
       </button>
-      <div class="step-body" data-gpu="all">
+      <div class="step-body">
+        <div data-gpu="all">
         <ul class="checklist">
           <li><div class="cb" onclick="toggleCb(this)"></div><span>Download dan install <a href="https://nodejs.org" target="_blank">Node.js LTS</a> (minimal v18)</span></li>
           <li><div class="cb" onclick="toggleCb(this)"></div><span>Verifikasi: <code>node --version</code> dan <code>npm --version</code></span></li>
@@ -925,6 +926,7 @@ npm install -g @anthropic-ai/claude-code
 claude --version</pre>
         </div>
         <button class="mark-done-btn" onclick="markDone('s5')">✓ Langkah ini selesai</button>
+        </div>
       </div>
     </div>
 
@@ -938,7 +940,8 @@ claude --version</pre>
         </div>
         <span class="step-chevron">▶</span>
       </button>
-      <div class="step-body" data-gpu="all">
+      <div class="step-body">
+        <div data-gpu="all">
 
         <p style="font-size:13px; color:var(--muted); margin-bottom:12px;"><strong style="color:var(--text)">Metode 1</strong> — Per session (jalankan setiap kali):</p>
         <div class="code-wrap">
@@ -969,6 +972,7 @@ claude --model qwen2.5-coder:14b</pre>
 
         <div class="alert a-info"><span class="alert-icon">💡</span><span>Untuk kembali ke Anthropic API: hapus env di settings.json atau jalankan <code>set ANTHROPIC_BASE_URL=</code> di terminal.</span></div>
         <button class="mark-done-btn" onclick="markDone('s6')">✓ Langkah ini selesai</button>
+        </div>
       </div>
     </div>
 
@@ -997,8 +1001,28 @@ claude --model qwen2.5-coder:14b</pre>
     document.querySelectorAll('.gpu-banner').forEach(b => b.classList.remove('show'));
     document.getElementById('banner-' + gpu).classList.add('show');
 
-    // Show steps
-    document.getElementById('stepsContainer').classList.add('show');
+    // Reset semua step: hapus done, open, dan semua checkbox
+    const ids = ['s1','s2','s3','s4','s5','s6'];
+    ids.forEach(id => {
+      const block = document.getElementById(id);
+      block.classList.remove('done', 'open');
+      block.querySelectorAll('.cb').forEach(cb => {
+        cb.classList.remove('on');
+        cb.textContent = '';
+      });
+    });
+
+    // Reset doneSteps dan finish banner
+    doneSteps = new Set();
+    document.getElementById('finishBanner').classList.remove('show');
+
+    // Reset VRAM saat ganti GPU
+    selectedVRAM = null;
+    document.body.removeAttribute('data-selected-vram');
+    document.querySelectorAll('.vram-btn').forEach(b => b.classList.remove('active'));
+
+    // Sembunyikan steps sampai VRAM dipilih
+    document.getElementById('stepsContainer').classList.remove('show');
   }
 
   function selectVRAM(vram, el) {
@@ -1006,6 +1030,13 @@ claude --model qwen2.5-coder:14b</pre>
     el.classList.add('active');
     selectedVRAM = vram;
     document.body.setAttribute('data-selected-vram', vram);
+
+    // Tampilkan steps hanya jika GPU sudah dipilih
+    if (selectedGPU) {
+      document.getElementById('stepsContainer').classList.add('show');
+      const anyOpen = document.querySelector('.step-block.open, .step-block.done');
+      if (!anyOpen) document.getElementById('s1').classList.add('open');
+    }
   }
 
   function toggleStep(id) {
