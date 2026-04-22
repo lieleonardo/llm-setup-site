@@ -521,10 +521,34 @@
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── BACK BUTTON ── */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    margin-bottom: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .back-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
 </style>
 </head>
 <body>
 <div class="container">
+
+  <a href="../index.html" class="back-btn">← KEMBALI KE HOME</a>
 
   <!-- Header -->
   <header>
