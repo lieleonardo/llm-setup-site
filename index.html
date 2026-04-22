@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local LLM × Claude Code — Setup Hub</title>
+<meta name="description" content="Panduan setup Local LLM + Claude Code untuk semua GPU — Intel Arc, NVIDIA, AMD. Windows 11.">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@300;400;700;900&display=swap');
+
+:root {
+  --bg: #03050a;
+  --surface: #080d15;
+  --border: #0f1a2e;
+  --border2: #162035;
+  --text: #c8d8f0;
+  --muted: #3d5070;
+  --bright: #e8f2ff;
+  --accent: #00d4ff;
+  --accent2: #0066ff;
+  --green: #00ff88;
+  --nvidia: #76b900;
+  --amd: #ff3333;
+  --intel: #3d9be9;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── ANIMATED BACKGROUND ── */
+.bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+  animation: gridDrift 20s linear infinite;
+}
+
+@keyframes gridDrift {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
+.bg-glow-1 {
+  position: fixed;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,102,255,0.08) 0%, transparent 70%);
+  top: -200px; left: -200px;
+  z-index: 0;
+  animation: float1 8s ease-in-out infinite;
+}
+
+.bg-glow-2 {
+  position: fixed;
+  width: 500px; height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,212,255,0.06) 0%, transparent 70%);
+  bottom: -150px; right: -150px;
+  z-index: 0;
+  animation: float2 10s ease-in-out infinite;
+}
+
+@keyframes float1 {
+  0%, 100% { transform: translate(0,0); }
+  50% { transform: translate(40px, 30px); }
+}
+@keyframes float2 {
+  0%, 100% { transform: translate(0,0); }
+  50% { transform: translate(-30px, -40px); }
+}
+
+/* ── LAYOUT ── */
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 24px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  background: rgba(3,5,10,0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 24px;
+  list-style: none;
+}
+
+.nav-links a {
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--accent); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 120px 0 80px;
+}
+
+.hero-pre {
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 0.2em;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-pre::before {
+  content: '';
+  display: inline-block;
+  width: 32px;
+  height: 1px;
+  background: var(--accent);
+}
+
+.hero-pre .blink {
+  display: inline-block;
+  width: 8px; height: 16px;
+  background: var(--accent);
+  animation: blink 1s step-end infinite;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+h1 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(38px, 7vw, 80px);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: -0.03em;
+  color: var(--bright);
+  margin-bottom: 8px;
+}
+
+h1 .line2 {
+  display: block;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(0,212,255,0.5);
+}
+
+h1 .line3 {
+  display: block;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-sub {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.8;
+  max-width: 480px;
+  margin: 28px 0 48px;
+}
+
+.hero-sub strong { color: var(--text); font-weight: 400; }
+
+.hero-cta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 14px 28px;
+  border-radius: 4px;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,212,255,0.3);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 400;
+  padding: 14px 28px;
+  border-radius: 4px;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--border2);
+  transition: all 0.2s;
+}
+
+.btn-outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Hero stats */
+.hero-stats {
+  display: flex;
+  gap: 0;
+  margin-top: 72px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  max-width: 560px;
+}
+
+.stat {
+  flex: 1;
+  padding: 18px 20px;
+  border-right: 1px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+
+.stat-val {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+/* ── GUIDES SECTION ── */
+.section {
+  padding: 100px 0;
+}
+
+.section-header {
+  margin-bottom: 48px;
+}
+
+.section-tag {
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.2em;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.section-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(22px, 4vw, 36px);
+  font-weight: 700;
+  color: var(--bright);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Guide Cards */
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.guide-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  display: block;
+  transition: all 0.25s;
+  position: relative;
+}
+
+.guide-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  transition: opacity 0.2s;
+  opacity: 0;
+}
+
+.guide-card.intel::before { background: linear-gradient(90deg, var(--intel), transparent); }
+.guide-card.universal::before { background: linear-gradient(90deg, var(--accent), var(--accent2), transparent); }
+
+.guide-card:hover {
+  border-color: var(--border2);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.guide-card:hover::before { opacity: 1; }
+
+.card-top {
+  padding: 28px 28px 0;
+}
+
+.card-icon {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 20px;
+}
+
+.guide-card.intel .card-icon { background: rgba(61,155,233,0.1); border: 1px solid rgba(61,155,233,0.2); }
+.guide-card.universal .card-icon { background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.15); }
+
+.card-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bright);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.card-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.card-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 20px 28px;
+}
+
+.chip {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 3px;
+  letter-spacing: 0.06em;
+}
+
+.chip-blue { background: rgba(61,155,233,0.12); color: #7ec8ff; border: 1px solid rgba(61,155,233,0.2); }
+.chip-cyan { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+.chip-green { background: rgba(0,255,136,0.08); color: var(--green); border: 1px solid rgba(0,255,136,0.15); }
+.chip-red { background: rgba(255,51,51,0.1); color: #ff8080; border: 1px solid rgba(255,51,51,0.2); }
+.chip-gray { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+
+.card-footer {
+  padding: 16px 28px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+
+.card-link-text {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  transition: color 0.2s;
+}
+
+.guide-card.intel .card-link-text { color: var(--intel); }
+.guide-card.universal .card-link-text { color: var(--accent); }
+
+.card-arrow {
+  font-size: 16px;
+  transition: transform 0.2s;
+}
+
+.guide-card.intel .card-arrow { color: var(--intel); }
+.guide-card.universal .card-arrow { color: var(--accent); }
+.guide-card:hover .card-arrow { transform: translateX(4px); }
+
+/* ── DEPLOY SECTION ── */
+.deploy-section {
+  padding: 80px 0 120px;
+  border-top: 1px solid var(--border);
+}
+
+.deploy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .deploy-grid { grid-template-columns: 1fr; }
+  .hero-stats { flex-direction: column; }
+  .stat { border-right: none; border-bottom: 1px solid var(--border); }
+  .stat:last-child { border-bottom: none; }
+}
+
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.deploy-step {
+  display: flex;
+  gap: 16px;
+  position: relative;
+  padding-bottom: 28px;
+}
+
+.deploy-step:last-child { padding-bottom: 0; }
+
+.deploy-step::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 32px;
+  bottom: 0;
+  width: 1px;
+  background: var(--border);
+}
+
+.deploy-step:last-child::before { display: none; }
+
+.step-dot {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  position: relative;
+  z-index: 1;
+}
+
+.step-content { padding-top: 4px; }
+
+.step-heading {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bright);
+  margin-bottom: 6px;
+  letter-spacing: -0.01em;
+}
+
+.step-text {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.step-text code {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  background: rgba(0,212,255,0.08);
+  color: var(--accent);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.step-text a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0,212,255,0.3);
+}
+
+.step-text a:hover { border-bottom-color: var(--accent); }
+
+/* Code panel */
+.code-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  position: sticky;
+  top: 80px;
+}
+
+.code-panel-header {
+  padding: 12px 16px;
+  background: rgba(0,212,255,0.04);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-r { background: #ff5f57; }
+.dot-y { background: #ffbd2e; }
+.dot-g { background: #28c840; }
+
+.code-panel-title {
+  font-size: 10px;
+  color: var(--muted);
+  margin-left: 8px;
+  letter-spacing: 0.08em;
+}
+
+.code-panel pre {
+  padding: 20px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: #8bafd4;
+  overflow-x: auto;
+}
+
+.c-cmd { color: #7ec8ff; }
+.c-str { color: #7dd5a9; }
+.c-cmt { color: #3d5070; }
+.c-url { color: #c792ea; }
+.c-ok { color: var(--green); }
+.c-acc { color: var(--accent); }
+
+/* ── FOLDER STRUCTURE ── */
+.folder-tree {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  line-height: 2;
+  margin: 20px 0;
+}
+
+.tree-dir { color: var(--accent); }
+.tree-file { color: var(--text); }
+.tree-note { color: var(--muted); }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 0;
+  text-align: center;
+}
+
+footer p {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+footer span { color: var(--accent); }
+
+/* ── ANIMATIONS ── */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.fade-in:nth-child(1) { animation-delay: 0.1s; }
+.fade-in:nth-child(2) { animation-delay: 0.2s; }
+.fade-in:nth-child(3) { animation-delay: 0.3s; }
+.fade-in:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* scroll reveal */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow-1"></div>
+<div class="bg-glow-2"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">LOCAL//LLM</a>
+  <ul class="nav-links">
+    <li><a href="#guides">Panduan</a></li>
+    <li><a href="#deploy">Deploy</a></li>
+    <li><a href="https://github.com" target="_blank">GitHub →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="wrap">
+  <section class="hero">
+    <div class="fade-in">
+      <p class="hero-pre">// SETUP GUIDE v2.0 <span class="blink"></span></p>
+    </div>
+    <div class="fade-in">
+      <h1>
+        LOCAL LLM
+        <span class="line2">+ CLAUDE</span>
+        <span class="line3">CODE.</span>
+      </h1>
+    </div>
+    <div class="fade-in">
+      <p class="hero-sub">
+        Jalankan AI lokal di PC kamu — <strong>gratis, privat, tanpa API key</strong>.<br>
+        Panduan step-by-step untuk Intel Arc, NVIDIA, dan AMD.<br>
+        Windows 11. Tidak perlu koneksi internet saat inferensi.
+      </p>
+    </div>
+    <div class="fade-in">
+      <div class="hero-cta">
+        <a href="#guides" class="btn-primary">↓ LIHAT PANDUAN</a>
+        <a href="#deploy" class="btn-outline">CARA DEPLOY →</a>
+      </div>
+    </div>
+
+    <div class="hero-stats fade-in">
+      <div class="stat">
+        <span class="stat-val">3</span>
+        <span class="stat-label">VENDOR GPU</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">$0</span>
+        <span class="stat-label">BIAYA API</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">100%</span>
+        <span class="stat-label">LOKAL & PRIVAT</span>
+      </div>
+      <div class="stat">
+        <span class="stat-val">W11</span>
+        <span class="stat-label">WINDOWS 11</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- GUIDES -->
+<div class="wrap">
+  <section class="section" id="guides">
+    <div class="section-header reveal">
+      <span class="section-tag">// 02. PILIH PANDUAN</span>
+      <h2 class="section-title">Dua Jalur Setup.<br>Pilih Sesuai GPU Kamu.</h2>
+    </div>
+
+    <div class="guide-grid reveal">
+
+      <!-- Card 1: Intel Arc B580 -->
+      <a href="guides/arc-b580.html" class="guide-card intel">
+        <div class="card-top">
+          <div class="card-icon">🔵</div>
+          <div class="card-title">Intel Arc B580</div>
+          <p class="card-desc">Panduan spesifik untuk Intel Arc B580 12GB. Menggunakan IPEX-LLM — fork Ollama resmi dari Intel untuk akselerasi GPU Arc.</p>
+        </div>
+        <div class="card-chips">
+          <span class="chip chip-blue">Intel Arc</span>
+          <span class="chip chip-blue">B580 12GB</span>
+          <span class="chip chip-green">IPEX-LLM</span>
+          <span class="chip chip-gray">16GB DDR5</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-link-text">BUKA PANDUAN</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <!-- Card 2: Universal -->
+      <a href="guides/universal.html" class="guide-card universal">
+        <div class="card-top">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">Universal GPU</div>
+          <p class="card-desc">Panduan lengkap untuk semua vendor GPU. Pilih GPU dan VRAM kamu, panduan otomatis menyesuaikan langkah instalasi.</p>
+        </div>
+        <div class="card-chips">
+          <span class="chip chip-green">NVIDIA CUDA</span>
+          <span class="chip chip-red">AMD Vulkan</span>
+          <span class="chip chip-blue">Intel IPEX</span>
+          <span class="chip chip-cyan">4–16GB VRAM</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-link-text">BUKA PANDUAN</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+    </div>
+  </section>
+</div>
+
+<!-- DEPLOY TO GITHUB PAGES -->
+<div class="wrap">
+  <section class="deploy-section" id="deploy">
+    <div class="section-header reveal">
+      <span class="section-tag">// 03. CARA DEPLOY</span>
+      <h2 class="section-title">Host di<br>GitHub Pages.</h2>
+    </div>
+
+    <div class="deploy-grid">
+
+      <!-- Steps -->
+      <div class="step-list reveal">
+
+        <div class="deploy-step">
+          <div class="step-dot">1</div>
+          <div class="step-content">
+            <div class="step-heading">Buat Repository Baru</div>
+            <p class="step-text">
+              Buka <a href="https://github.com/new" target="_blank">github.com/new</a>.
+              Beri nama repo, contoh: <code>local-llm-setup</code>.
+              Set ke <strong>Public</strong>, lalu klik <strong>Create repository</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-dot">2</div>
+          <div class="step-content">
+            <div class="step-heading">Siapkan Struktur Folder</div>
+            <p class="step-text">Download semua file panduan ini, susun dengan struktur berikut sebelum upload:</p>
+            <div class="folder-tree">
+              <span class="tree-dir">📁 local-llm-setup/</span><br>
+              <span class="tree-file">│── index.html</span> <span class="tree-note">← halaman ini</span><br>
+              <span class="tree-dir">└── 📁 guides/</span><br>
+              <span class="tree-file">&nbsp;&nbsp;&nbsp;&nbsp;├── arc-b580.html</span><br>
+              <span class="tree-file">&nbsp;&nbsp;&nbsp;&nbsp;└── universal.html</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-dot">3</div>
+          <div class="step-content">
+            <div class="step-heading">Upload via Git (Disarankan)</div>
+            <p class="step-text">
+              Clone repo, masukkan file, push. Atau upload langsung via <strong>Add file → Upload files</strong> di halaman repo GitHub.
+            </p>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-dot">4</div>
+          <div class="step-content">
+            <div class="step-heading">Aktifkan GitHub Pages</div>
+            <p class="step-text">
+              Di repo → <strong>Settings</strong> → <strong>Pages</strong> → Source: <code>Deploy from a branch</code> → Branch: <code>main</code>, folder: <code>/ (root)</code> → klik <strong>Save</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div class="deploy-step">
+          <div class="step-dot">5</div>
+          <div class="step-content">
+            <div class="step-heading">Tunggu 1–2 Menit</div>
+            <p class="step-text">
+              Setelah aktif, situsmu live di:<br>
+              <code>https://username.github.io/local-llm-setup</code>
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Code Panel -->
+      <div class="reveal">
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <div class="dot dot-r"></div>
+            <div class="dot dot-y"></div>
+            <div class="dot dot-g"></div>
+            <span class="code-panel-title">terminal — git deploy</span>
+          </div>
+          <pre><span class="c-cmt"># 1. Clone repo yang baru dibuat</span>
+<span class="c-cmd">git clone</span> <span class="c-url">https://github.com/USERNAME/local-llm-setup.git</span>
+<span class="c-cmd">cd</span> local-llm-setup
+
+<span class="c-cmt"># 2. Buat folder guides</span>
+<span class="c-cmd">mkdir</span> guides
+
+<span class="c-cmt"># 3. Pindahkan file HTML ke posisi yang benar</span>
+<span class="c-cmt">#    index.html → root folder</span>
+<span class="c-cmt">#    arc-b580.html → guides/</span>
+<span class="c-cmt">#    universal.html → guides/</span>
+
+<span class="c-cmt"># 4. Add, commit, push</span>
+<span class="c-cmd">git add</span> .
+<span class="c-cmd">git commit</span> -m <span class="c-str">"feat: add local LLM setup guides"</span>
+<span class="c-cmd">git push</span> origin main
+
+<span class="c-cmt"># 5. Aktifkan Pages di GitHub Settings</span>
+<span class="c-cmt">#    Settings → Pages → Branch: main → Save</span>
+
+<span class="c-ok"># ✓ Live di:</span>
+<span class="c-acc">https://USERNAME.github.io/local-llm-setup</span></pre>
+        </div>
+
+        <div style="margin-top:16px; padding:14px 18px; background:rgba(0,255,136,0.05); border:1px solid rgba(0,255,136,0.12); border-radius:6px; font-size:12px; color:#6bcf9e; line-height:1.7;">
+          💡 <strong style="color:#86efac">Tips:</strong> Setiap kali update file, cukup <code style="background:rgba(0,0,0,0.3); color:#7dd5a9; padding:1px 5px; border-radius:3px;">git push</code> lagi — GitHub Pages otomatis rebuild dalam 1–2 menit.
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <p>
+      Dibuat dengan ❤️ · Local LLM Setup Hub<br>
+      <span>Intel Arc</span> · <span>NVIDIA</span> · <span>AMD</span> · Windows 11
+    </p>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>

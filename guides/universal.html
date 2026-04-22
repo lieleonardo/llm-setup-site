@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setup Local LLM — Universal GPU Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Epilogue:wght@400;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #080a0f;
+    --surface: #0f1219;
+    --surface2: #161b25;
+    --border: #1c2333;
+    --text: #dde3ef;
+    --muted: #5a6478;
+    --code-bg: #080c12;
+
+    /* GPU vendor colors */
+    --nvidia: #76b900;
+    --nvidia-dim: rgba(118,185,0,0.15);
+    --amd: #ed1c24;
+    --amd-dim: rgba(237,28,36,0.15);
+    --intel: #0071c5;
+    --intel-dim: rgba(0,113,197,0.15);
+    --accent: #4f8ef7;
+
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Epilogue', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* Noise texture overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+    opacity: 0.4;
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    margin-bottom: 56px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 14px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .header-desc {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.7;
+    max-width: 560px;
+  }
+
+  /* ── GPU SELECTOR ── */
+  .selector-section {
+    margin-bottom: 48px;
+  }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .gpu-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .gpu-btn {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gpu-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .gpu-btn.nvidia::before { background: var(--nvidia-dim); }
+  .gpu-btn.amd::before { background: var(--amd-dim); }
+  .gpu-btn.intel::before { background: var(--intel-dim); }
+
+  .gpu-btn:hover::before, .gpu-btn.active::before { opacity: 1; }
+
+  .gpu-btn.nvidia:hover, .gpu-btn.nvidia.active { border-color: var(--nvidia); }
+  .gpu-btn.amd:hover, .gpu-btn.amd.active { border-color: var(--amd); }
+  .gpu-btn.intel:hover, .gpu-btn.intel.active { border-color: var(--intel); }
+
+  .gpu-logo {
+    font-size: 28px;
+    display: block;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .gpu-name {
+    font-weight: 800;
+    font-size: 14px;
+    display: block;
+    position: relative;
+  }
+
+  .gpu-btn.nvidia .gpu-name { color: var(--nvidia); }
+  .gpu-btn.amd .gpu-name { color: var(--amd); }
+  .gpu-btn.intel .gpu-name { color: #4a9ee8; }
+
+  .gpu-sub {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-top: 3px;
+    position: relative;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* VRAM Selector */
+  .vram-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .vram-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 16px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+
+  .vram-btn:hover { border-color: var(--accent); color: var(--text); }
+  .vram-btn.active { border-color: var(--accent); background: rgba(79,142,247,0.12); color: var(--accent); }
+
+  /* Selected GPU banner */
+  .gpu-banner {
+    display: none;
+    border-radius: 8px;
+    padding: 12px 18px;
+    margin-bottom: 32px;
+    font-size: 13px;
+    font-weight: 600;
+    align-items: center;
+    gap: 10px;
+  }
+  .gpu-banner.show { display: flex; }
+  .gpu-banner.nvidia { background: var(--nvidia-dim); border: 1px solid rgba(118,185,0,0.3); color: #a3d44c; }
+  .gpu-banner.amd { background: var(--amd-dim); border: 1px solid rgba(237,28,36,0.3); color: #f87171; }
+  .gpu-banner.intel { background: var(--intel-dim); border: 1px solid rgba(0,113,197,0.3); color: #60a5fa; }
+
+  /* ── STEPS ── */
+  .steps-container { display: none; }
+  .steps-container.show { display: block; }
+
+  .step-block {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .step-block:hover { border-color: #2a3448; }
+
+  .step-header-btn {
+    width: 100%;
+    background: var(--surface);
+    border: none;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+  }
+
+  .step-header-btn:hover { background: var(--surface2); }
+
+  .step-num {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    background: var(--surface2);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .step-block.done .step-num {
+    background: rgba(34,197,94,0.15);
+    color: var(--success);
+    border-color: rgba(34,197,94,0.3);
+  }
+
+  .step-block.done .step-num::after { content: '✓'; }
+  .step-block.done .step-num span { display: none; }
+
+  .step-title-wrap { flex: 1; }
+
+  .step-title-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    display: block;
+  }
+
+  .step-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 2px;
+    display: block;
+  }
+
+  .step-chevron {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .step-block.open .step-chevron { transform: rotate(90deg); }
+
+  .step-body {
+    display: none;
+    padding: 4px 22px 22px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .step-block.open .step-body { display: block; }
+
+  /* ── CODE BLOCKS ── */
+  .code-wrap {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 14px 0;
+    overflow: hidden;
+  }
+
+  .code-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+  }
+
+  .copy-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    background: rgba(79,142,247,0.1);
+    border: 1px solid rgba(79,142,247,0.2);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover { background: rgba(79,142,247,0.2); }
+  .copy-btn.done { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); color: var(--success); }
+
+  pre {
+    padding: 14px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.75;
+    overflow-x: auto;
+    color: #c9d1d9;
+  }
+
+  .kw { color: #ff7b72; }
+  .val { color: #79c0ff; }
+  .str { color: #a5d6ff; }
+  .cm { color: #6e7681; font-style: italic; }
+  .ok { color: #3fb950; }
+  .warn { color: #d29922; }
+
+  /* ── ALERTS ── */
+  .alert {
+    border-radius: 7px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .alert-icon { flex-shrink: 0; margin-top: 1px; }
+
+  .a-info { background: rgba(79,142,247,0.08); border: 1px solid rgba(79,142,247,0.2); color: #93c5fd; }
+  .a-warn { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #fcd34d; }
+  .a-ok { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); color: #86efac; }
+  .a-err { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+
+  /* ── MODEL TABLE ── */
+  .model-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 12px 0;
+  }
+
+  .model-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+
+  .model-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    vertical-align: middle;
+  }
+
+  .model-table tr:last-child td { border-bottom: none; }
+  .model-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .model-name-cell {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .badge-green { background: rgba(34,197,94,0.15); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+  .badge-blue { background: rgba(79,142,247,0.12); color: #93c5fd; border: 1px solid rgba(79,142,247,0.2); }
+  .badge-yellow { background: rgba(245,158,11,0.1); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
+
+  /* ── CHECKLIST ── */
+  .checklist { list-style: none; }
+  .checklist li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .cb {
+    width: 18px; height: 18px; min-width: 18px;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+    transition: all 0.15s;
+    font-size: 11px; color: transparent;
+  }
+  .cb.on { background: var(--success); border-color: var(--success); color: white; }
+
+  /* inline code */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: rgba(79,142,247,0.1);
+    color: #93c5fd;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(79,142,247,0.3); }
+  a:hover { border-bottom-color: var(--accent); }
+
+  /* Mark done button */
+  .mark-done-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    background: rgba(34,197,94,0.1);
+    border: 1px solid rgba(34,197,94,0.25);
+    color: var(--success);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    transition: all 0.15s;
+  }
+  .mark-done-btn:hover { background: rgba(34,197,94,0.18); }
+
+  /* GPU-specific visibility */
+  [data-gpu] { display: none; }
+  body[data-selected-gpu="nvidia"] [data-gpu~="nvidia"] { display: block; }
+  body[data-selected-gpu="amd"] [data-gpu~="amd"] { display: block; }
+  body[data-selected-gpu="intel"] [data-gpu~="intel"] { display: block; }
+  /* shared across all */
+  [data-gpu="all"] { display: block !important; }
+
+  /* VRAM-specific */
+  [data-vram] { display: none; }
+  body[data-selected-vram="4"] [data-vram~="4"] { display: table-row; }
+  body[data-selected-vram="6"] [data-vram~="4"][data-vram~="6"],
+  body[data-selected-vram="6"] [data-vram~="6"] { display: table-row; }
+  body[data-selected-vram="8"] [data-vram~="4"][data-vram~="6"][data-vram~="8"],
+  body[data-selected-vram="8"] [data-vram~="8"] { display: table-row; }
+  body[data-selected-vram="12"] [data-vram~="12"],
+  body[data-selected-vram="12"] [data-vram~="8"],
+  body[data-selected-vram="12"] [data-vram~="6"],
+  body[data-selected-vram="12"] [data-vram~="4"] { display: table-row; }
+  body[data-selected-vram="16"] [data-vram] { display: table-row; }
+
+  /* show all models if no vram selected */
+  body:not([data-selected-vram]) [data-vram] { display: table-row; }
+
+  /* Finish banner */
+  .finish-banner {
+    display: none;
+    text-align: center;
+    padding: 48px 24px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    margin-top: 32px;
+  }
+  .finish-banner.show { display: block; }
+  .finish-banner h2 { font-size: 28px; font-weight: 900; color: #fff; margin-bottom: 8px; }
+  .finish-banner p { color: var(--muted); font-size: 14px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <p class="eyebrow">// Local LLM × Claude Code × Windows 11</p>
+    <h1>Setup <span>Universal</span><br>GPU Guide</h1>
+    <p class="header-desc">Panduan setup lokal LLM untuk semua vendor GPU — pilih GPU kamu dan ikuti langkah yang sesuai.</p>
+  </header>
+
+  <!-- GPU Selector -->
+  <div class="selector-section">
+    <p class="section-label">// Step 0 — Pilih GPU kamu</p>
+    <div class="gpu-selector">
+      <div class="gpu-btn nvidia" onclick="selectGPU('nvidia', this)">
+        <span class="gpu-logo">🟢</span>
+        <span class="gpu-name">NVIDIA</span>
+        <span class="gpu-sub">GeForce / RTX / GTX</span>
+      </div>
+      <div class="gpu-btn amd" onclick="selectGPU('amd', this)">
+        <span class="gpu-logo">🔴</span>
+        <span class="gpu-name">AMD</span>
+        <span class="gpu-sub">Radeon RX series</span>
+      </div>
+      <div class="gpu-btn intel" onclick="selectGPU('intel', this)">
+        <span class="gpu-logo">🔵</span>
+        <span class="gpu-name">Intel Arc</span>
+        <span class="gpu-sub">A-series / B-series</span>
+      </div>
+    </div>
+
+    <p class="section-label" style="margin-top:20px;">// VRAM GPU kamu</p>
+    <div class="vram-selector">
+      <div class="vram-btn" onclick="selectVRAM('4', this)">4 GB</div>
+      <div class="vram-btn" onclick="selectVRAM('6', this)">6 GB</div>
+      <div class="vram-btn" onclick="selectVRAM('8', this)">8 GB</div>
+      <div class="vram-btn" onclick="selectVRAM('12', this)">12 GB</div>
+      <div class="vram-btn" onclick="selectVRAM('16', this)">16 GB+</div>
+    </div>
+  </div>
+
+  <!-- GPU Banner -->
+  <div class="gpu-banner nvidia" id="banner-nvidia">
+    <span>🟢</span>
+    <span>NVIDIA terdeteksi — menggunakan <strong>Ollama standar + CUDA</strong>. Cara paling mudah.</span>
+  </div>
+  <div class="gpu-banner amd" id="banner-amd">
+    <span>🔴</span>
+    <span>AMD Radeon — menggunakan <strong>Ollama standar + Vulkan</strong> (Windows). ROCm hanya di Linux.</span>
+  </div>
+  <div class="gpu-banner intel" id="banner-intel">
+    <span>🔵</span>
+    <span>Intel Arc — menggunakan <strong>IPEX-LLM</strong> (fork Ollama khusus Intel). Sedikit lebih banyak langkah.</span>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps-container" id="stepsContainer">
+
+    <!-- STEP 1: Driver -->
+    <div class="step-block open" id="s1">
+      <button class="step-header-btn" onclick="toggleStep('s1')">
+        <div class="step-num"><span>1</span></div>
+        <div class="step-title-wrap">
+          <span class="step-title-text">Install / Update Driver GPU</span>
+          <span class="step-subtitle">Wajib terbaru agar runtime bisa akses GPU</span>
+        </div>
+        <span class="step-chevron">▶</span>
+      </button>
+      <div class="step-body">
+
+        <!-- NVIDIA -->
+        <div data-gpu="nvidia">
+          <ul class="checklist">
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Download driver terbaru di <a href="https://www.nvidia.com/en-us/drivers/" target="_blank">nvidia.com/drivers</a> — pilih GPU GeForce / RTX / GTX kamu</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Install dan restart PC</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Verifikasi: buka CMD ketik <code>nvidia-smi</code> — harus muncul info GPU dan VRAM</span></li>
+          </ul>
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD — verifikasi driver</span><button class="copy-btn" onclick="cp(this,'nv-drv')">COPY</button></div>
+            <pre id="nv-drv">nvidia-smi
+<span class="cm"># Output yang diharapkan:</span>
+<span class="ok">+-----------------------------------------------------------------------------+
+| NVIDIA-SMI 560.xx    Driver Version: 560.xx    CUDA Version: 12.x         |
+| GPU  Name        VRAM        Driver-Model |</span></pre>
+          </div>
+          <div class="alert a-info"><span class="alert-icon">ℹ️</span><span>CUDA <strong>tidak perlu</strong> diinstall manual — Ollama sudah bundling CUDA runtime-nya sendiri.</span></div>
+        </div>
+
+        <!-- AMD -->
+        <div data-gpu="amd">
+          <ul class="checklist">
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Download <a href="https://www.amd.com/en/support" target="_blank">AMD Software: Adrenalin Edition</a> terbaru</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Install dan restart PC</span></li>
+          </ul>
+          <div class="alert a-warn"><span class="alert-icon">⚠️</span><span><strong>ROCm di Windows hanya untuk GPU discrete Radeon RX</strong> (bukan APU/iGPU). Jika kamu pakai APU seperti Ryzen 7000G, gunakan mode Vulkan saja.</span></div>
+        </div>
+
+        <!-- Intel -->
+        <div data-gpu="intel">
+          <ul class="checklist">
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Download driver di <a href="https://www.intel.com/content/www/us/en/download-center/home.html" target="_blank">Intel Download Center</a> — cari "Intel Arc & Iris Xe Graphics"</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Minimal versi <code>32.0.101.6078</code> atau lebih baru</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Install <a href="https://visualstudio.microsoft.com/downloads/" target="_blank">Visual Studio 2022 Community</a> — centang workload <strong>"Desktop development with C++"</strong></span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Restart PC setelah install driver</span></li>
+          </ul>
+        </div>
+
+        <button class="mark-done-btn" onclick="markDone('s1')">✓ Langkah ini selesai</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Install Ollama Runtime -->
+    <div class="step-block" id="s2">
+      <button class="step-header-btn" onclick="toggleStep('s2')">
+        <div class="step-num"><span>2</span></div>
+        <div class="step-title-wrap">
+          <span class="step-title-text">Install Ollama Runtime</span>
+          <span class="step-subtitle">Runtime berbeda tergantung vendor GPU</span>
+        </div>
+        <span class="step-chevron">▶</span>
+      </button>
+      <div class="step-body">
+
+        <!-- NVIDIA -->
+        <div data-gpu="nvidia">
+          <div class="alert a-ok"><span class="alert-icon">✅</span><span>NVIDIA adalah yang <strong>paling mudah</strong> — Ollama resmi sudah support CUDA out-of-the-box.</span></div>
+          <ul class="checklist">
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Download installer dari <a href="https://ollama.com/download/windows" target="_blank">ollama.com/download/windows</a></span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Jalankan <code>OllamaSetup.exe</code> — install tanpa perlu admin rights</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Verifikasi: buka CMD ketik <code>ollama --version</code></span></li>
+          </ul>
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD</span><button class="copy-btn" onclick="cp(this,'nv-inst')">COPY</button></div>
+            <pre id="nv-inst"><span class="cm"># Cek versi Ollama</span>
+ollama --version
+
+<span class="cm"># Cek GPU terdeteksi (jalankan setelah ollama serve)</span>
+ollama ps</pre>
+          </div>
+        </div>
+
+        <!-- AMD -->
+        <div data-gpu="amd">
+          <div class="alert a-info"><span class="alert-icon">ℹ️</span><span>Ollama standar sudah support AMD di Windows via <strong>Vulkan</strong>. Untuk performa lebih baik di GPU RX 6000+, bisa tambahkan ROCm.</span></div>
+          <ul class="checklist">
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Download <a href="https://ollama.com/download/windows" target="_blank">OllamaSetup.exe</a> dari ollama.com</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Install seperti biasa</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Aktifkan Vulkan backend dengan set environment variable:</span></li>
+          </ul>
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">Windows Settings → Environment Variables</span><button class="copy-btn" onclick="cp(this,'amd-env')">COPY</button></div>
+            <pre id="amd-env"><span class="cm"># Tambahkan di System Environment Variables:</span>
+<span class="val">OLLAMA_VULKAN</span> = <span class="str">1</span>
+
+<span class="cm"># Atau via PowerShell (permanen untuk user):</span>
+[Environment]::SetEnvironmentVariable(<span class="str">"OLLAMA_VULKAN"</span>, <span class="str">"1"</span>, <span class="str">"User"</span>)</pre>
+          </div>
+          <div class="alert a-warn"><span class="alert-icon">⚠️</span><span>Jika GPU kamu RX 6000+ dan ingin ROCm (performa lebih tinggi), download juga dari <a href="https://github.com/likelovewant/ollama-for-amd/releases" target="_blank">ollama-for-amd</a> dan replace file ROCm-nya.</span></div>
+        </div>
+
+        <!-- Intel -->
+        <div data-gpu="intel">
+          <div class="alert a-warn"><span class="alert-icon">⚠️</span><span>Ollama standar <strong>tidak</strong> support Intel Arc. Harus pakai <strong>IPEX-LLM Portable ZIP</strong> dari Intel.</span></div>
+          <ul class="checklist">
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Buka <a href="https://github.com/intel/ipex-llm/releases" target="_blank">github.com/intel/ipex-llm/releases</a></span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Download file <code>ollama-ipex-llm-*.zip</code> versi Windows terbaru</span></li>
+            <li><div class="cb" onclick="toggleCb(this)"></div><span>Ekstrak ke <code>C:\ipex-llm</code></span></li>
+          </ul>
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">Struktur folder setelah ekstrak</span></div>
+            <pre>C:\ipex-llm\
+├── <span class="val">ollama.exe</span>         <span class="cm"># Binary Ollama versi Intel</span>
+├── <span class="val">start-ollama.bat</span>   <span class="cm"># Script jalankan server</span>
+└── <span class="val">...</span></pre>
+          </div>
+        </div>
+
+        <button class="mark-done-btn" onclick="markDone('s2')">✓ Langkah ini selesai</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Jalankan Server -->
+    <div class="step-block" id="s3">
+      <button class="step-header-btn" onclick="toggleStep('s3')">
+        <div class="step-num"><span>3</span></div>
+        <div class="step-title-wrap">
+          <span class="step-title-text">Jalankan Ollama Server</span>
+          <span class="step-subtitle">Biarkan terminal ini tetap terbuka</span>
+        </div>
+        <span class="step-chevron">▶</span>
+      </button>
+      <div class="step-body">
+
+        <!-- NVIDIA -->
+        <div data-gpu="nvidia">
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD — Terminal 1 (jangan ditutup)</span><button class="copy-btn" onclick="cp(this,'nv-serve')">COPY</button></div>
+            <pre id="nv-serve"><span class="cm"># Jalankan server</span>
+ollama serve
+
+<span class="cm"># Output yang diharapkan:</span>
+<span class="ok">Listening on 127.0.0.1:11434</span></pre>
+          </div>
+          <div class="alert a-ok"><span class="alert-icon">✅</span><span>Ollama otomatis mendeteksi GPU NVIDIA dan menggunakan CUDA. Tidak perlu set env variable tambahan.</span></div>
+        </div>
+
+        <!-- AMD -->
+        <div data-gpu="amd">
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD — Terminal 1</span><button class="copy-btn" onclick="cp(this,'amd-serve')">COPY</button></div>
+            <pre id="amd-serve"><span class="cm"># Pastikan OLLAMA_VULKAN=1 sudah diset, lalu:</span>
+ollama serve
+
+<span class="cm"># Cek GPU terdeteksi di output:</span>
+<span class="ok">inference compute  library=Vulkan  name=Vulkan0</span>
+<span class="ok">description="AMD Radeon RX ..."</span></pre>
+          </div>
+          <div class="alert a-err"><span class="alert-icon">⛔</span><span>Jika output menunjukkan <code>library=cpu</code>, pastikan <code>OLLAMA_VULKAN=1</code> sudah tersimpan di Environment Variables dan restart terminal.</span></div>
+        </div>
+
+        <!-- Intel -->
+        <div data-gpu="intel">
+          <div class="code-wrap">
+            <div class="code-top"><span class="code-lang">CMD — Terminal 1 (dari folder C:\ipex-llm)</span><button class="copy-btn" onclick="cp(this,'intel-serve')">COPY</button></div>
+            <pre id="intel-serve"><span class="cm">:: Masuk ke folder IPEX-LLM</span>
+<span class="kw">cd</span> C:\ipex-llm
+
+<span class="cm">:: Set environment GPU Arc</span>
+<span class="kw">set</span> <span class="val">ONEAPI_DEVICE_SELECTOR</span>=level_zero:0
+<span class="kw">set</span> <span class="val">SYCL_CACHE_PERSISTENT</span>=1
+<span class="kw">set</span> <span class="val">OLLAMA_INTEL_GPU</span>=true
+<span class="kw">set</span> <span class="val">ZES_ENABLE_SYSMAN</span>=1
+
+<span class="cm">:: Jalankan server</span>
+<span class="kw">.\ollama.exe</span> serve</pre>
+          </div>
+          <div class="alert a-ok"><span class="alert-icon">✅</span><span>Server berjalan jika muncul: <code>Listening on 127.0.0.1:11434</code></span></div>
+        </div>
+
+        <button class="mark-done-btn" onclick="markDone('s3')">✓ Langkah ini selesai</button>
+      </div>
+    </div>
+
+    <!-- STEP 4: Pilih & Download Model -->
+    <div class="step-block" id="s4">
+      <button class="step-header-btn" onclick="toggleStep('s4')">
+        <div class="step-num"><span>4</span></div>
+        <div class="step-title-wrap">
+          <span class="step-title-text">Download Model LLM</span>
+          <span class="step-subtitle">Pilih sesuai VRAM yang kamu set di atas</span>
+        </div>
+        <span class="step-chevron">▶</span>
+      </button>
+      <div class="step-body">
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Model yang ditampilkan disesuaikan dengan VRAM yang kamu pilih:</p>
+
+        <table class="model-table">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>VRAM</th>
+              <th>Kegunaan</th>
+              <th>Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-vram="4 6 8 12 16">
+              <td class="model-name-cell">qwen2.5-coder:7b</td>
+              <td><span class="badge badge-blue">4–5 GB</span></td>
+              <td>Coding</td>
+              <td><span class="badge badge-green">Ringan & cepat</span></td>
+            </tr>
+            <tr data-vram="4 6 8 12 16">
+              <td class="model-name-cell">phi4:3.8b</td>
+              <td><span class="badge badge-blue">3–4 GB</span></td>
+              <td>Umum</td>
+              <td><span class="badge badge-yellow">VRAM minimum</span></td>
+            </tr>
+            <tr data-vram="8 12 16">
+              <td class="model-name-cell">qwen2.5-coder:14b</td>
+              <td><span class="badge badge-blue">8–10 GB</span></td>
+              <td>Coding</td>
+              <td><span class="badge badge-green">⭐ Rekomendasi</span></td>
+            </tr>
+            <tr data-vram="8 12 16">
+              <td class="model-name-cell">qwen3:14b</td>
+              <td><span class="badge badge-blue">8–10 GB</span></td>
+              <td>Umum</td>
+              <td><span class="badge badge-green">Serba guna</span></td>
+            </tr>
+            <tr data-vram="8 12 16">
+              <td class="model-name-cell">deepseek-r1:14b</td>
+              <td><span class="badge badge-blue">8–10 GB</span></td>
+              <td>Reasoning</td>
+              <td></td>
+            </tr>
+            <tr data-vram="16">
+              <td class="model-name-cell">qwen2.5-coder:32b</td>
+              <td><span class="badge badge-blue">16–18 GB</span></td>
+              <td>Coding</td>
+              <td><span class="badge badge-green">Terbaik untuk coding</span></td>
+            </tr>
+            <tr data-vram="16">
+              <td class="model-name-cell">devstral-small-2</td>
+              <td><span class="badge badge-blue">14–16 GB</span></td>
+              <td>Coding</td>
+              <td><span class="badge badge-green">High-end</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- NVIDIA pull -->
+        <div data-gpu="nvidia">
+          <div class="code-wrap" style="margin-top:16px;">
+            <div class="code-top"><span class="code-lang">CMD — Terminal 2</span><button class="copy-btn" onclick="cp(this,'nv-pull')">COPY</button></div>
+            <pre id="nv-pull"><span class="cm"># Ganti nama model sesuai pilihan di tabel atas</span>
+ollama pull qwen2.5-coder:14b
+
+<span class="cm"># Test dan cek GPU dipakai</span>
+ollama run qwen2.5-coder:14b --verbose
+<span class="cm"># Cari: PROCESSOR = GPU:0 (NVIDIA ...)</span></pre>
+          </div>
+        </div>
+
+        <!-- AMD pull -->
+        <div data-gpu="amd">
+          <div class="code-wrap" style="margin-top:16px;">
+            <div class="code-top"><span class="code-lang">CMD — Terminal 2</span><button class="copy-btn" onclick="cp(this,'amd-pull')">COPY</button></div>
+            <pre id="amd-pull"><span class="cm"># Download model</span>
+ollama pull qwen2.5-coder:14b
+
+<span class="cm"># Verifikasi GPU Vulkan aktif</span>
+ollama run qwen2.5-coder:14b --verbose
+<span class="cm"># Cari: PROCESSOR = GPU:0 (Vulkan/AMD ...)</span></pre>
+          </div>
+        </div>
+
+        <!-- Intel pull -->
+        <div data-gpu="intel">
+          <div class="code-wrap" style="margin-top:16px;">
+            <div class="code-top"><span class="code-lang">CMD — Terminal 2</span><button class="copy-btn" onclick="cp(this,'intel-pull')">COPY</button></div>
+            <pre id="intel-pull"><span class="cm">:: Download model (gunakan ollama.exe dari ipex-llm)</span>
+C:\ipex-llm\ollama.exe pull qwen2.5-coder:14b
+
+<span class="cm">:: Verifikasi GPU Arc aktif</span>
+C:\ipex-llm\ollama.exe run qwen2.5-coder:14b --verbose
+<span class="cm">;; Cari: Provider = Intel Arc (SYCL)</span></pre>
+          </div>
+        </div>
+
+        <button class="mark-done-btn" onclick="markDone('s4')">✓ Langkah ini selesai</button>
+      </div>
+    </div>
+
+    <!-- STEP 5: Install Claude Code -->
+    <div class="step-block" id="s5">
+      <button class="step-header-btn" onclick="toggleStep('s5')">
+        <div class="step-num"><span>5</span></div>
+        <div class="step-title-wrap">
+          <span class="step-title-text">Install Claude Code</span>
+          <span class="step-subtitle">Sama untuk semua GPU — via npm</span>
+        </div>
+        <span class="step-chevron">▶</span>
+      </button>
+      <div class="step-body" data-gpu="all">
+        <ul class="checklist">
+          <li><div class="cb" onclick="toggleCb(this)"></div><span>Download dan install <a href="https://nodejs.org" target="_blank">Node.js LTS</a> (minimal v18)</span></li>
+          <li><div class="cb" onclick="toggleCb(this)"></div><span>Verifikasi: <code>node --version</code> dan <code>npm --version</code></span></li>
+        </ul>
+        <div class="code-wrap">
+          <div class="code-top"><span class="code-lang">CMD / PowerShell</span><button class="copy-btn" onclick="cp(this,'cc-inst')">COPY</button></div>
+          <pre id="cc-inst"><span class="cm"># Install Claude Code global</span>
+npm install -g @anthropic-ai/claude-code
+
+<span class="cm"># Verifikasi</span>
+claude --version</pre>
+        </div>
+        <button class="mark-done-btn" onclick="markDone('s5')">✓ Langkah ini selesai</button>
+      </div>
+    </div>
+
+    <!-- STEP 6: Connect Claude Code -->
+    <div class="step-block" id="s6">
+      <button class="step-header-btn" onclick="toggleStep('s6')">
+        <div class="step-num"><span>6</span></div>
+        <div class="step-title-wrap">
+          <span class="step-title-text">Hubungkan Claude Code ke Local LLM</span>
+          <span class="step-subtitle">Sama untuk semua GPU</span>
+        </div>
+        <span class="step-chevron">▶</span>
+      </button>
+      <div class="step-body" data-gpu="all">
+
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;"><strong style="color:var(--text)">Metode 1</strong> — Per session (jalankan setiap kali):</p>
+        <div class="code-wrap">
+          <div class="code-top"><span class="code-lang">CMD</span><button class="copy-btn" onclick="cp(this,'cc-conn1')">COPY</button></div>
+          <pre id="cc-conn1"><span class="kw">set</span> <span class="val">ANTHROPIC_BASE_URL</span>=http://localhost:11434
+<span class="kw">set</span> <span class="val">ANTHROPIC_AUTH_TOKEN</span>=ollama
+<span class="kw">set</span> <span class="val">ANTHROPIC_API_KEY</span>=
+<span class="kw">set</span> <span class="val">CLAUDE_CODE_ATTRIBUTION_HEADER</span>=0
+
+claude --model qwen2.5-coder:14b</pre>
+        </div>
+
+        <p style="font-size:13px; color:var(--muted); margin: 16px 0 12px;"><strong style="color:var(--text)">Metode 2</strong> — Permanen via <code>settings.json</code>:</p>
+        <div class="code-wrap">
+          <div class="code-top"><span class="code-lang">%USERPROFILE%\.claude\settings.json</span><button class="copy-btn" onclick="cp(this,'cc-conn2')">COPY</button></div>
+          <pre id="cc-conn2">{
+  <span class="str">"env"</span>: {
+    <span class="str">"ANTHROPIC_BASE_URL"</span>: <span class="val">"http://localhost:11434"</span>,
+    <span class="str">"ANTHROPIC_AUTH_TOKEN"</span>: <span class="val">"ollama"</span>,
+    <span class="str">"ANTHROPIC_API_KEY"</span>: <span class="val">""</span>,
+    <span class="str">"CLAUDE_CODE_ATTRIBUTION_HEADER"</span>: <span class="val">"0"</span>,
+    <span class="str">"DISABLE_PROMPT_CACHING"</span>: <span class="val">"1"</span>
+  },
+  <span class="str">"hasCompletedOnboarding"</span>: <span class="val">true</span>,
+  <span class="str">"primaryApiKey"</span>: <span class="val">"sk-dummy-key"</span>
+}</pre>
+        </div>
+
+        <div class="alert a-info"><span class="alert-icon">💡</span><span>Untuk kembali ke Anthropic API: hapus env di settings.json atau jalankan <code>set ANTHROPIC_BASE_URL=</code> di terminal.</span></div>
+        <button class="mark-done-btn" onclick="markDone('s6')">✓ Langkah ini selesai</button>
+      </div>
+    </div>
+
+    <!-- Finish Banner -->
+    <div class="finish-banner" id="finishBanner">
+      <h2>🎉 Setup Selesai!</h2>
+      <p style="margin-top:8px;">Local LLM + Claude Code sudah terhubung.<br>Jalankan <code>claude</code> di terminal project kamu.</p>
+    </div>
+
+  </div><!-- end steps container -->
+
+</div><!-- end container -->
+
+<script>
+  let selectedGPU = null;
+  let selectedVRAM = null;
+  let doneSteps = new Set();
+
+  function selectGPU(gpu, el) {
+    document.querySelectorAll('.gpu-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    selectedGPU = gpu;
+    document.body.setAttribute('data-selected-gpu', gpu);
+
+    // Show banners
+    document.querySelectorAll('.gpu-banner').forEach(b => b.classList.remove('show'));
+    document.getElementById('banner-' + gpu).classList.add('show');
+
+    // Show steps
+    document.getElementById('stepsContainer').classList.add('show');
+  }
+
+  function selectVRAM(vram, el) {
+    document.querySelectorAll('.vram-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    selectedVRAM = vram;
+    document.body.setAttribute('data-selected-vram', vram);
+  }
+
+  function toggleStep(id) {
+    const block = document.getElementById(id);
+    block.classList.toggle('open');
+  }
+
+  function toggleCb(el) {
+    el.classList.toggle('on');
+    el.textContent = el.classList.contains('on') ? '✓' : '';
+  }
+
+  function markDone(id) {
+    const block = document.getElementById(id);
+    block.classList.add('done');
+    block.classList.remove('open');
+    doneSteps.add(id);
+
+    // Open next step
+    const ids = ['s1','s2','s3','s4','s5','s6'];
+    const idx = ids.indexOf(id);
+    if (idx >= 0 && idx < ids.length - 1) {
+      document.getElementById(ids[idx+1]).classList.add('open');
+    }
+
+    // Show finish when all done
+    if (doneSteps.size >= ids.length) {
+      document.getElementById('finishBanner').classList.add('show');
+    }
+  }
+
+  function cp(btn, id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    navigator.clipboard.writeText((el.innerText || el.textContent).trim()).then(() => {
+      btn.textContent = '✓ COPIED';
+      btn.classList.add('done');
+      setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('done'); }, 2000);
+    });
+  }
+</script>
+</body>
+</html>
